@@ -2,7 +2,8 @@ package gredis
 
 import (
 	"fmt"
-	"redis"
+
+	"github.com/alphazero/Go-Redis"
 )
 
 //GRedis 关系数据库结构
