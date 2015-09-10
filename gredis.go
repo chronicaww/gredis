@@ -13,10 +13,12 @@ type GRedis struct {
 }
 
 var _self *GRedis
+var dbID = 1
 
 //Instance 获取实例
-func Instance() *GRedis {
+func Instance(id int) *GRedis {
 	if _self == nil {
+		dbID = id
 		_self = new(GRedis)
 		// spec := redis.DefaultSpec().Db(1).Password("")
 		// client, e := redis.NewSynchClientWithSpec(spec)
@@ -26,14 +28,13 @@ func Instance() *GRedis {
 		// }
 		connToRedis()
 		connToRedis2()
-
 		// _self.client = client
 	}
 	return _self
 }
 
 func getClient() redis.Client {
-	spec := redis.DefaultSpec().Db(1).Password("")
+	spec := redis.DefaultSpec().Db(dbID).Password("")
 	client, e := redis.NewSynchClientWithSpec(spec)
 	if e != nil {
 		fmt.Println("failed to create the client", e)
@@ -45,7 +46,7 @@ func connToRedis() {
 	// if _self.client != nil {
 	// 	_self.client.Quit()
 	// }
-	spec := redis.DefaultSpec().Db(1).Password("")
+	spec := redis.DefaultSpec().Db(dbID).Password("")
 	client, e := redis.NewSynchClientWithSpec(spec)
 	if e != nil {
 		fmt.Println("failed to create the client", e)
@@ -79,7 +80,7 @@ func IsMembers(key string, b [][]byte) bool {
 
 //SetValue 设置一个key值
 func SetValue(key string, value []byte) error {
-	c := Instance()
+	c := Instance(dbID)
 	e := c.client.Set(key, value)
 	if e != nil {
 		connToRedis()
@@ -311,6 +312,6 @@ func RemSetValue(key string, v string) (bool, error) {
 
 //FlushDB 刷新db
 func FlushDB() {
-	c := Instance()
+	c := Instance(dbID)
 	c.client.Flushdb()
 }
