@@ -59,7 +59,7 @@ func connToRedis2() {
 	// if _self.client2 != nil {
 	// 	_self.client2.Quit()
 	// }
-	spec := redis.DefaultSpec().Db(1).Password("")
+	spec := redis.DefaultSpec().Db(dbID).Password("")
 	client, e := redis.NewSynchClientWithSpec(spec)
 	if e != nil {
 		fmt.Println("failed to create the client", e)
