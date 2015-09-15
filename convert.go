@@ -131,3 +131,12 @@ func ArrInt32ToArrByte(b []int32) [][]byte {
 	}
 	return result
 }
+
+//ArrByteToArrString 字节数组转换为string数组
+func ArrByteToArrString(b [][]byte) []string {
+	result := []string{}
+	for _, v := range b {
+		result = append(result, string(v))
+	}
+	return result
+}
