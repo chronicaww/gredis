@@ -3,7 +3,7 @@ package gredis
 import (
 	"fmt"
 
-	"github.com/alphazero/Go-Redis"
+	"github.com/chronicaww/Go-Redis"
 )
 
 //GRedis 关系数据库结构
@@ -36,6 +36,7 @@ func Instance(id int) *GRedis {
 func getClient() redis.Client {
 	spec := redis.DefaultSpec().Db(dbID).Password("")
 	client, e := redis.NewSynchClientWithSpec(spec)
+
 	if e != nil {
 		fmt.Println("failed to create the client", e)
 	}
@@ -314,4 +315,79 @@ func RemSetValue(key string, v string) (bool, error) {
 func FlushDB() {
 	c := Instance(dbID)
 	c.client.Flushdb()
+}
+
+// GetList 获得列表内容
+func GetList(key string) [][]byte {
+	client := getClient()
+	defer client.Quit()
+	len, e := client.Llen(key)
+	if e != nil {
+		return [][]byte{}
+	}
+	result, _ := client.Lrange(key, int64(0), len)
+	return result
+}
+
+// AddList 列表
+func AddList(key string, v string, pos int) error {
+	client := getClient()
+	defer client.Quit()
+
+	if pos == 0 {
+		return client.Lpush(key, []byte(v))
+	}
+	if pos < 0 {
+		return client.Rpush(key, []byte(v))
+	}
+
+	len, e := client.Llen(key)
+	if e != nil {
+		return e
+	}
+	tmpLeft, e := client.Lrange(key, int64(0), int64(pos-1))
+	if e != nil {
+		return e
+	}
+	// fmt.Println("lenl:", tmpLeft)
+
+	tmpRight, e := client.Lrange(key, int64(pos), len)
+	if e != nil {
+		return e
+	}
+	// fmt.Println("lenr:", tmpRight)
+
+	result := make([][]byte, len+1)
+	copy(result, tmpLeft)
+	copy(result[pos+1:], tmpRight)
+	result[pos] = []byte(v)
+	DelSet(key)
+
+	for _, v0 := range result {
+		client.Rpush(key, v0)
+	}
+	return nil
+}
+
+// RemListValue 从列表中移除一个值
+func RemListValue(key string, v string) error {
+	client := getClient()
+	defer client.Quit()
+	_, e := client.Lrem(key, []byte(v), int64(0))
+
+	// fmt.Println("nnn:", key, []byte(v), v, n)
+	return e
+}
+
+//FindInList 获得在列表中位置
+func FindInList(key, v string) int {
+	client := getClient()
+	defer client.Quit()
+	list := GetList(key)
+	for i, v0 := range list {
+		if string(v0) == v {
+			return i
+		}
+	}
+	return -1
 }
