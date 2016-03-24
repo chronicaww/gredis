@@ -2,8 +2,8 @@ package gredis
 
 import (
 	"fmt"
-
 	"github.com/chronicaww/Go-Redis"
+	"time"
 )
 
 //GRedis 关系数据库结构
@@ -14,6 +14,7 @@ type GRedis struct {
 
 var _self *GRedis
 var dbID = 1
+var Delay = int64(1)
 
 //Instance 获取实例
 func Instance(id int) *GRedis {
@@ -81,6 +82,7 @@ func IsMembers(key string, b [][]byte) bool {
 
 //SetValue 设置一个key值
 func SetValue(key string, value []byte) error {
+	tm := time.Now().Unix()
 	c := Instance(dbID)
 	e := c.client.Set(key, value)
 	if e != nil {
@@ -90,11 +92,17 @@ func SetValue(key string, value []byte) error {
 			return e
 		}
 	}
+
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("SetValue Delay:", d)
+	}
 	return nil
 }
 
 //GetValue 获取一个key值
 func GetValue(key string) ([]byte, error) {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -122,11 +130,17 @@ func GetValue(key string) ([]byte, error) {
 	// 	// 	break
 	// 	// }
 	// }
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetValue Delay:", d)
+	}
 	return result, e
 }
 
 //GetValues 模糊获取key值，以*作为模糊标记
 func GetValues(key string) ([][]byte, error) {
+	tm := time.Now().Unix()
+
 	result := [][]byte{}
 	// c := Instance()
 	client := getClient()
@@ -142,11 +156,18 @@ func GetValues(key string) ([][]byte, error) {
 		}
 		result = append(result, val)
 	}
+
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetValues Delay:", d)
+	}
+
 	return result, nil
 }
 
 //GetKeys 获取key名
 func GetKeys(v string) []string {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -159,11 +180,16 @@ func GetKeys(v string) []string {
 		return []string{}
 		// }
 	}
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetKeys Delay:", d)
+	}
 	return keyArr
 }
 
 //DelValue 删除一个key值
 func DelValue(key string) error {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -176,11 +202,18 @@ func DelValue(key string) error {
 	// 	connToRedis2()
 	// }
 	// }
+
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("DelValue Delay:", d)
+	}
+
 	return e
 }
 
 //DelValues 模糊删除key值，以*作为模糊标记
 func DelValues(key string) error {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -202,11 +235,16 @@ func DelValues(key string) error {
 		// 	return e
 		// }
 	}
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("DelValues Delay:", d)
+	}
 	return nil
 }
 
 //AddSet 向指定的set添加值
 func AddSet(key, value string) error {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -217,11 +255,16 @@ func AddSet(key, value string) error {
 		// _, e = client2.Sadd(key, []byte(value))
 		return e
 	}
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("AddSet Delay:", d)
+	}
 	return nil
 }
 
 //AddListSet 向指定的set加入一多值
 func AddListSet(key string, values [][]byte) error {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -234,11 +277,16 @@ func AddListSet(key string, values [][]byte) error {
 			return e
 		}
 	}
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("AddListSet Delay:", d)
+	}
 	return nil
 }
 
 //GetSet 获取set
 func GetSet(key string) [][]byte {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -251,11 +299,16 @@ func GetSet(key string) [][]byte {
 	// 		connToRedis2()
 	// 	}
 	// }
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetSet Delay:", d)
+	}
 	return result
 }
 
 //GetSetLen 获取set长度
 func GetSetLen(key string) int64 {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -268,16 +321,22 @@ func GetSetLen(key string) int64 {
 	// 		connToRedis2()
 	// 	}
 	// }
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetSetLen Delay:", d)
+	}
 	return result
 }
 
 //ChkInSet 判定一个值是否在set中
 func ChkInSet(key string, v string) bool {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
 
 	bIs, _ := client.Sismember(key, []byte(v))
+
 	// if e != nil {
 	// 	connToRedis()
 	// 	bIs, e = c.client.Sismember(key, []byte(v))
@@ -285,18 +344,24 @@ func ChkInSet(key string, v string) bool {
 	// 		connToRedis2()
 	// 	}
 	// }
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("ChkInSet Delay:", d)
+	}
 	return bIs
 }
 
 //DelSet 删除set
 func DelSet(key string) error {
 	e := DelValue(key)
+
 	return e
 
 }
 
 //RemSetValue 从set中删除值
 func RemSetValue(key string, v string) (bool, error) {
+	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
 	defer client.Quit()
@@ -308,6 +373,10 @@ func RemSetValue(key string, v string) (bool, error) {
 	// 		connToRedis2()
 	// 	}
 	// }
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("RemSetValue Delay:", d)
+	}
 	return bRem, e
 }
 
@@ -319,6 +388,7 @@ func FlushDB() {
 
 // GetList 获得列表内容
 func GetList(key string) [][]byte {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 	len, e := client.Llen(key)
@@ -326,11 +396,16 @@ func GetList(key string) [][]byte {
 		return [][]byte{}
 	}
 	result, _ := client.Lrange(key, int64(0), len)
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetList Delay:", d)
+	}
 	return result
 }
 
 // AddList 列表
 func AddList(key string, v string, pos int) error {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 
@@ -366,15 +441,24 @@ func AddList(key string, v string, pos int) error {
 	for _, v0 := range result {
 		client.Rpush(key, v0)
 	}
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("AddList Delay:", d)
+	}
 	return nil
 }
 
 // RemListValue 从列表中移除一个值
 func RemListValue(key string, v string) error {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 	_, e := client.Lrem(key, []byte(v), int64(0))
 
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("RemListValue Delay:", d)
+	}
 	// fmt.Println("nnn:", key, []byte(v), v, n)
 	return e
 }
