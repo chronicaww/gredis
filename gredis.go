@@ -83,31 +83,39 @@ func IsMembers(key string, b [][]byte) bool {
 //SetValue 设置一个key值
 func SetValue(key string, value []byte) error {
 	tm := time.Now().Unix()
-	c := Instance(dbID)
+	// c := Instance(dbID)
+	// d := time.Now().Unix() - tm
+	// if d > Delay {
+	// 	fmt.Println("SetValueA Delay:", d)
+	// 	tm = time.Now().Unix()
+	// }
+
+	client := getClient()
+	defer client.Quit()
+	e := client.Set(key, value)
 	d := time.Now().Unix() - tm
 	if d > Delay {
-		fmt.Println("SetValueA Delay:", d)
-	}
-
-	e := c.client.Set(key, value)
-	d = time.Now().Unix() - tm
-	if d > Delay {
-		fmt.Println("SetValueB Delay:", d)
+		fmt.Println("SetValueB Delay:", d, len(value), ToString(value), ToInt32(value))
+		tm = time.Now().Unix()
+		connToRedis()
 	}
 	if e != nil {
-		connToRedis()
-		d = time.Now().Unix() - tm
-		if d > Delay {
-			fmt.Println("SetValueD1 Delay:", d)
-		}
-		e := c.client2.Set(key, value)
-		if e != nil {
-			return e
-		}
-		d = time.Now().Unix() - tm
-		if d > Delay {
-			fmt.Println("SetValueD2 Delay:", d)
-		}
+		return e
+		// 	connToRedis()
+		// 	d = time.Now().Unix() - tm
+		// 	if d > Delay {
+		// 		fmt.Println("SetValueD1 Delay:", d)
+		// 		tm = time.Now().Unix()
+		// 	}
+		// 	e := c.client2.Set(key, value)
+		// 	if e != nil {
+		// 		return e
+		// 	}
+		// 	d = time.Now().Unix() - tm
+		// 	if d > Delay {
+		// 		fmt.Println("SetValueD2 Delay:", d)
+		// 		tm = time.Now().Unix()
+		// 	}
 	}
 	d = time.Now().Unix() - tm
 	if d > Delay {
