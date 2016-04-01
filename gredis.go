@@ -84,19 +84,36 @@ func IsMembers(key string, b [][]byte) bool {
 func SetValue(key string, value []byte) error {
 	tm := time.Now().Unix()
 	c := Instance(dbID)
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("SetValueA Delay:", d)
+	}
+
 	e := c.client.Set(key, value)
+	d = time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("SetValueB Delay:", d)
+	}
 	if e != nil {
 		connToRedis()
+		d = time.Now().Unix() - tm
+		if d > Delay {
+			fmt.Println("SetValueD1 Delay:", d)
+		}
 		e := c.client2.Set(key, value)
 		if e != nil {
 			return e
 		}
+		d = time.Now().Unix() - tm
+		if d > Delay {
+			fmt.Println("SetValueD2 Delay:", d)
+		}
+	}
+	d = time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("SetValueC Delay:", d)
 	}
 
-	d := time.Now().Unix() - tm
-	if d > Delay {
-		fmt.Println("SetValue Delay:", d)
-	}
 	return nil
 }
 
