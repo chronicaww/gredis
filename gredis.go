@@ -269,6 +269,7 @@ func DelValues(key string) error {
 
 //AddSet 向指定的set添加值
 func AddSet(key, value string) error {
+
 	tm := time.Now().Unix()
 	// c := Instance()
 	client := getClient()
@@ -280,6 +281,7 @@ func AddSet(key, value string) error {
 		// _, e = client2.Sadd(key, []byte(value))
 		return e
 	}
+
 	d := time.Now().Unix() - tm
 	if d > Delay {
 		fmt.Println("AddSet Delay:", d)
@@ -302,6 +304,7 @@ func AddListSet(key string, values [][]byte) error {
 			return e
 		}
 	}
+
 	d := time.Now().Unix() - tm
 	if d > Delay {
 		fmt.Println("AddListSet Delay:", d)
@@ -499,4 +502,58 @@ func FindInList(key, v string) int {
 		}
 	}
 	return -1
+}
+
+// AddScore 添加一个排行榜分数
+func AddScore(key string, score float64, v []byte) error {
+	client := getClient()
+	defer client.Quit()
+	_, e := client.Zadd(key, score, v)
+	return e
+}
+
+// RemScore 移除一个排行榜分数
+func RemScore(key string, v []byte) error {
+	client := getClient()
+	defer client.Quit()
+	_, e := client.Zrem(key, v)
+	return e
+}
+
+// GetRangeByRank 获取n名排行
+func GetRangeByRank(key string, from, to int64) ([][]byte, error) {
+	client := getClient()
+	defer client.Quit()
+
+	result, e := client.Zrange(key, from, to)
+	return result, e
+}
+
+// GetRangeByScore 指定分数区间的排名
+func GetRangeByScore(key string, from, to float64) ([][]byte, error) {
+	client := getClient()
+	defer client.Quit()
+
+	result, e := client.Zrangebyscore(key, from, to)
+	return result, e
+}
+
+// GetScore 获取分数
+func GetScore(key string, v []byte) (float64, error) {
+	client := getClient()
+	defer client.Quit()
+
+	result, e := client.Zscore(key, v)
+
+	return result, e
+}
+
+// GetRank 获取排名
+func GetRank(key string, v []byte) (int64, error) {
+	client := getClient()
+	defer client.Quit()
+
+	result, e := client.Zrank(key, v)
+
+	return result, e
 }
