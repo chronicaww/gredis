@@ -521,12 +521,17 @@ func RemScore(key string, v []byte) error {
 }
 
 // GetRangeByRank 获取n名排行
-func GetRangeByRank(key string, from, to int64) ([][]byte, error) {
+func GetRangeByRank(key string, from, to int64, bAsc bool) ([][]byte, error) {
 	client := getClient()
 	defer client.Quit()
 
-	result, e := client.Zrange(key, from, to)
+	if bAsc {
+		result, e := client.Zrange(key, from, to)
+		return result, e
+	}
+	result, e := client.Zrevrange(key, from, to)
 	return result, e
+
 }
 
 // GetRangeByScore 指定分数区间的排名
@@ -549,11 +554,14 @@ func GetScore(key string, v []byte) (float64, error) {
 }
 
 // GetRank 获取排名
-func GetRank(key string, v []byte) (int64, error) {
+func GetRank(key string, v []byte, bAsc bool) (int64, error) {
 	client := getClient()
 	defer client.Quit()
 
-	result, e := client.Zrank(key, v)
-
+	if bAsc {
+		result, e := client.Zrank(key, v)
+		return result, e
+	}
+	result, e := client.Zrevrank(key, v)
 	return result, e
 }

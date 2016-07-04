@@ -28,7 +28,7 @@ func Test_Rank(t *testing.T) {
 	AddScore("TestScoreRank", float64(-60), []byte("No6"))
 	AddScore("TestScoreRank", float64(-55), []byte("No7"))
 	AddScore("TestScoreRank", float64(-44), []byte("No8"))
-	rank, e := GetRank("TestScoreRank", []byte("No7"))
+	rank, e := GetRank("TestScoreRank", []byte("No7"), false)
 
 	fmt.Println("rank:", rank, e)
 	// if rank != int64(1) {
