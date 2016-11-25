@@ -2,8 +2,9 @@ package gredis
 
 import (
 	"fmt"
-	"github.com/chronicaww/Go-Redis"
 	"time"
+
+	"github.com/chronicaww/Go-Redis"
 )
 
 //GRedis 关系数据库结构
@@ -14,6 +15,8 @@ type GRedis struct {
 
 var _self *GRedis
 var dbID = 1
+
+// Delay 延迟警告时长
 var Delay = int64(1)
 
 //Instance 获取实例
@@ -506,55 +509,85 @@ func FindInList(key, v string) int {
 
 // AddScore 添加一个排行榜分数
 func AddScore(key string, score float64, v []byte) error {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 	_, e := client.Zadd(key, score, v)
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("AddScore Delay:", d)
+	}
 	return e
 }
 
 // RemScore 移除一个排行榜分数
 func RemScore(key string, v []byte) error {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 	_, e := client.Zrem(key, v)
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("RemScore Delay:", d)
+	}
 	return e
 }
 
 // GetRangeByRank 获取n名排行
 func GetRangeByRank(key string, from, to int64, bAsc bool) ([][]byte, error) {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 
 	if bAsc {
 		result, e := client.Zrange(key, from, to)
+		d := time.Now().Unix() - tm
+		if d > Delay {
+			fmt.Println("GetRangeByRank Delay:", d)
+		}
 		return result, e
 	}
 	result, e := client.Zrevrange(key, from, to)
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetRangeByRank Delay:", d)
+	}
 	return result, e
 
 }
 
 // GetRangeByScore 指定分数区间的排名
 func GetRangeByScore(key string, from, to float64) ([][]byte, error) {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 
 	result, e := client.Zrangebyscore(key, from, to)
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetRangeByScore Delay:", d)
+	}
+
 	return result, e
 }
 
 // GetScore 获取分数
 func GetScore(key string, v []byte) (float64, error) {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 
 	result, e := client.Zscore(key, v)
-
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetScore Delay:", d)
+	}
 	return result, e
 }
 
 // GetRank 获取排名
 func GetRank(key string, v []byte, bAsc bool) (int64, error) {
+	tm := time.Now().Unix()
 	client := getClient()
 	defer client.Quit()
 
@@ -563,5 +596,9 @@ func GetRank(key string, v []byte, bAsc bool) (int64, error) {
 		return result, e
 	}
 	result, e := client.Zrevrank(key, v)
+	d := time.Now().Unix() - tm
+	if d > Delay {
+		fmt.Println("GetRank Delay:", d)
+	}
 	return result, e
 }

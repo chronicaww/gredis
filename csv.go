@@ -33,7 +33,7 @@ func ReadCsvWithKey(csvName, fileName, keyName string, vols []string) error {
 	if e != nil {
 		return e
 	}
-	titles, e := csv.ReadTitle(fileName, "#!")
+	titles, _ := csv.ReadTitle(fileName, "#!")
 	n := 0
 	for i, u := range titles {
 		if u == keyName {
