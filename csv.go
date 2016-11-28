@@ -7,17 +7,17 @@ import (
 )
 
 //GetIdsByIndex 根据索引获得key
-func GetIdsByIndex(csvName, indexName, indexID string) []int32 {
-	return ArrByteToArrInt32(GetSet(GetIndexKey(csvName, indexName, indexID)))
+func GetIdsByIndex(rc *RedisConn, csvName, indexName, indexID string) []int32 {
+	return ArrByteToArrInt32(GetSet(rc, GetIndexKey(csvName, indexName, indexID)))
 }
 
 //AddCsvIndex 增加索引
-func AddCsvIndex(csvName, indexName string) {
-	ids := GetCsvIDs(csvName)
+func AddCsvIndex(rc *RedisConn, csvName, indexName string) {
+	ids := GetCsvIDs(rc, csvName)
 	for _, v := range ids {
-		indexID := GetCsvValue(csvName, indexName, v)
+		indexID := GetCsvValue(rc, csvName, indexName, v)
 		key := GetIndexKey(csvName, indexName, string(indexID))
-		AddSet(key, strconv.Itoa(int(v)))
+		AddSet(rc, key, strconv.Itoa(int(v)))
 	}
 }
 
@@ -28,7 +28,7 @@ func GetIndexKey(csvName, indexName, indexID string) string {
 }
 
 //ReadCsvWithKey 读取
-func ReadCsvWithKey(csvName, fileName, keyName string, vols []string) error {
+func ReadCsvWithKey(rc *RedisConn, csvName, fileName, keyName string, vols []string) error {
 	records, e := csv.Read(fileName)
 	if e != nil {
 		return e
@@ -43,7 +43,7 @@ func ReadCsvWithKey(csvName, fileName, keyName string, vols []string) error {
 	}
 
 	for _, v := range records {
-		SetCsvSetKeyValue(csvName, v[n])
+		SetCsvSetKeyValue(rc, csvName, v[n])
 		for i, u := range titles {
 			if i == n {
 
@@ -62,7 +62,7 @@ func ReadCsvWithKey(csvName, fileName, keyName string, vols []string) error {
 			}
 
 			if bIn {
-				SetCsvValue(csvName, u, v[n], v[i])
+				SetCsvValue(rc, csvName, u, v[n], v[i])
 			}
 		}
 	}
@@ -71,21 +71,21 @@ func ReadCsvWithKey(csvName, fileName, keyName string, vols []string) error {
 }
 
 //RemCsv 移除旧数据
-func RemCsv(csvName string) error {
-	keys := GetKeys(csvName + ":*")
+func RemCsv(rc *RedisConn, csvName string) error {
+	keys := GetKeys(rc, csvName+":*")
 	for _, v := range keys {
-		DelValue(v)
+		DelValue(rc, v)
 	}
 
-	DelSet(GetCsvSetKey(csvName))
+	DelSet(rc, GetCsvSetKey(csvName))
 
 	return nil
 }
 
 //ReadCsv 读取
-func ReadCsv(csvName, fileName string) error {
-	RemCsv(csvName)
-	return ReadCsvWithKey(csvName, fileName, "", []string{})
+func ReadCsv(rc *RedisConn, csvName, fileName string) error {
+	RemCsv(rc, csvName)
+	return ReadCsvWithKey(rc, csvName, fileName, "", []string{})
 	// records, e := csv.Read(fileName)
 	// if e != nil {
 	// 	return e
@@ -104,8 +104,8 @@ func ReadCsv(csvName, fileName string) error {
 }
 
 //GetCsvValue 取得某个值
-func GetCsvValue(csvName, colName string, keyID int32) []byte {
-	r, _ := GetValue(GetCsvKey(csvName, colName, strconv.Itoa(int(keyID))))
+func GetCsvValue(rc *RedisConn, csvName, colName string, keyID int32) []byte {
+	r, _ := GetValue(rc, GetCsvKey(csvName, colName, strconv.Itoa(int(keyID))))
 	return r
 }
 
@@ -115,13 +115,13 @@ func GetCsvKey(csvName, colName string, keyID string) string {
 }
 
 //SetCsvValue 设置值
-func SetCsvValue(csvName, colName string, keyID string, value string) {
-	SetValue(GetCsvKey(csvName, colName, keyID), []byte(value))
+func SetCsvValue(rc *RedisConn, csvName, colName string, keyID string, value string) {
+	SetValue(rc, GetCsvKey(csvName, colName, keyID), []byte(value))
 }
 
 //GetCsvValueByStringKey 取得某个值
-func GetCsvValueByStringKey(csvName, colName string, keyID string) []byte {
-	r, _ := GetValue(GetCsvKeyByStringKey(csvName, colName, keyID))
+func GetCsvValueByStringKey(rc *RedisConn, csvName, colName string, keyID string) []byte {
+	r, _ := GetValue(rc, GetCsvKeyByStringKey(csvName, colName, keyID))
 	return r
 }
 
@@ -136,19 +136,19 @@ func GetCsvSetKey(csvName string) string {
 }
 
 //SetCsvSetKeyValue 设置set值
-func SetCsvSetKeyValue(csvName, v string) error {
-	e := AddSet(GetCsvSetKey(csvName), v)
+func SetCsvSetKeyValue(rc *RedisConn, csvName, v string) error {
+	e := AddSet(rc, GetCsvSetKey(csvName), v)
 	return e
 }
 
 //ChkID 判定key是否存在
-func ChkID(csvName string, id int32) bool {
-	return ChkInSet(GetCsvSetKey(csvName), strconv.Itoa(int(id)))
+func ChkID(rc *RedisConn, csvName string, id int32) bool {
+	return ChkInSet(rc, GetCsvSetKey(csvName), strconv.Itoa(int(id)))
 }
 
 //GetCsvIDs 获得所有id
-func GetCsvIDs(csvName string) []int32 {
-	idsByte := GetSet(GetCsvSetKey(csvName))
+func GetCsvIDs(rc *RedisConn, csvName string) []int32 {
+	idsByte := GetSet(rc, GetCsvSetKey(csvName))
 	ids := []int32{}
 	for _, v := range idsByte {
 		id := ToInt32(v)
