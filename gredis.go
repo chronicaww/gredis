@@ -1,6 +1,12 @@
 package gredis
 
-import "github.com/garyburd/redigo/redis"
+import (
+	"errors"
+	"time"
+
+	"github.com/chronicaww/gredis/funcAnysis"
+	"github.com/garyburd/redigo/redis"
+)
 
 // RedisConn 连接
 type RedisConn struct {
@@ -50,16 +56,44 @@ var Delay = int64(1)
 
 // Get 获得连接
 func (rc *RedisConn) Get() redis.Conn {
+	tm := time.Now()
 	if rc.conn == nil || rc.conn.Flush() != nil {
+		// fmt.Println("get a new conn")
 		rc.conn = RedisClient.Get()
 	}
+	funcAnysis.Instance().Once("rc.Get", tm)
 	return rc.conn
+}
+
+// CheckConn 检测连接
+func (rc *RedisConn) CheckConn() error {
+	if rc == nil {
+		return errors.New("rc is nil")
+	}
+	if rc.conn == nil {
+		return errors.New("conn is nil")
+	}
+	return rc.conn.Flush()
 }
 
 // Destroy 销毁
 func (rc *RedisConn) Destroy() {
-	rc.conn.Close()
-	rc = nil
+	if rc != nil {
+		if nil != rc.conn {
+			rc.conn.Close()
+		}
+		// else {
+		// fmt.Println("conn is nil")
+		// }
+		rc = nil
+	}
+}
+
+// Close 关闭连接
+func (rc *RedisConn) Close() {
+	if rc != nil && nil != rc.conn {
+		rc.conn.Close()
+	}
 }
 
 //IsMembers 判定是否全包含
@@ -96,11 +130,12 @@ func SetValue(rc *RedisConn, key string, value []byte) error {
 	// return nil
 	// rc := RedisClient.Get()
 	// defer rc.Close()
-
+	tm := time.Now()
 	if rc == nil {
 		rc = new(RedisConn)
 	}
 	_, e := rc.Get().Do("SET", key, value)
+	funcAnysis.Instance().Once("gredis.SetValue", tm)
 	return e
 }
 
@@ -117,14 +152,17 @@ func GetValue(rc *RedisConn, key string) ([]byte, error) {
 	// return result, e
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
 	if rc == nil {
 		rc = new(RedisConn)
 	}
-	return redis.Bytes(rc.Get().Do("GET", key))
+	result, e := redis.Bytes(rc.Get().Do("GET", key))
+	funcAnysis.Instance().Once("gredis.GetValue", tm)
+	return result, e
 }
 
 //GetValues 模糊获取key值，以*作为模糊标记
-func GetValues(key string) ([][]byte, error) {
+func GetValues(rc *RedisConn, key string) ([][]byte, error) {
 	// tm := time.Now().Unix()
 	//
 	// result := [][]byte{}
@@ -149,9 +187,15 @@ func GetValues(key string) ([][]byte, error) {
 	// }
 	//
 	// return result, nil
-	rc := RedisClient.Get()
-	defer rc.Close()
-	return redis.ByteSlices(rc.Do("GET", key))
+	tm := time.Now()
+	// rc := RedisClient.Get()
+	// defer rc.Close()
+	if nil == rc {
+		rc = new(RedisConn)
+	}
+	result, e := redis.ByteSlices(rc.Get().Do("GET", key))
+	funcAnysis.Instance().Once("gredis.GetValues", tm)
+	return result, e
 }
 
 //GetKeys 获取key名
@@ -176,10 +220,12 @@ func GetKeys(rc *RedisConn, v string) []string {
 	// return keyArr
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
 	if rc == nil {
 		rc = new(RedisConn)
 	}
 	result, _ := redis.Strings(rc.Get().Do("KEYS", v))
+	funcAnysis.Instance().Once("gredis.GetKeys", tm)
 	return result
 }
 
@@ -207,10 +253,12 @@ func DelValue(rc *RedisConn, key string) error {
 	// return e
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
 	if rc == nil {
 		rc = new(RedisConn)
 	}
 	_, e := rc.Get().Do("DEL", key)
+	funcAnysis.Instance().Once("gredis.DelValue", tm)
 	return e
 }
 
@@ -226,6 +274,7 @@ func DelValues(rc *RedisConn, key string) error {
 	// connToRedis()
 	// return e
 	// }
+	tm := time.Now()
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -241,6 +290,7 @@ func DelValues(rc *RedisConn, key string) error {
 	// if d > Delay {
 	// 	fmt.Println("DelValues Delay:", d)
 	// }
+	funcAnysis.Instance().Once("gredis.DelValues", tm)
 	return nil
 }
 
@@ -266,10 +316,12 @@ func AddSet(rc *RedisConn, key, value string) error {
 	// return nil
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
 	if rc == nil {
 		rc = new(RedisConn)
 	}
 	_, e := rc.Get().Do("SADD", key, []byte(value))
+	funcAnysis.Instance().Once("gredis.AddSet", tm)
 	return e
 }
 
@@ -296,6 +348,7 @@ func AddListSet(rc *RedisConn, key string, values [][]byte) error {
 	// return nil
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -305,6 +358,7 @@ func AddListSet(rc *RedisConn, key string, values [][]byte) error {
 			return e
 		}
 	}
+	funcAnysis.Instance().Once("gredis.AddListSet", tm)
 	return nil
 }
 
@@ -341,10 +395,12 @@ func GetSetString(rc *RedisConn, key string) []string {
 	// return result
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
 	if rc == nil {
 		rc = new(RedisConn)
 	}
 	result, _ := redis.Strings(rc.Get().Do("SMEMBERS", key))
+	funcAnysis.Instance().Once("gredis.GetSetString", tm)
 	return result
 }
 
@@ -352,7 +408,9 @@ func GetSetString(rc *RedisConn, key string) []string {
 func GetSetInt(rc *RedisConn, key string) []int {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
 	result, _ := redis.Ints(rc.Get().Do("SMEMBERS", key))
+	funcAnysis.Instance().Once("gredis.GetSetInt", tm)
 	return result
 }
 
@@ -378,6 +436,8 @@ func GetSetLen(rc *RedisConn, key string) int64 {
 	// return result
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.GetSetLen", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -408,6 +468,8 @@ func ChkInSet(rc *RedisConn, key string, v string) bool {
 	// 	return bIs
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.ChkInSet", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -417,6 +479,8 @@ func ChkInSet(rc *RedisConn, key string, v string) bool {
 
 //DelSet 删除set
 func DelSet(rc *RedisConn, key string) error {
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.DelSet", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -446,6 +510,8 @@ func RemSetValue(rc *RedisConn, key string, v string) (bool, error) {
 	// return bRem, e
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.RemSetValue", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -458,6 +524,8 @@ func FlushDB(rc *RedisConn) {
 	// c.client.Flushdb()
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.FlushDB", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -481,6 +549,8 @@ func GetList(rc *RedisConn, key string) [][]byte {
 	// return result
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.GetList", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -492,6 +562,8 @@ func GetList(rc *RedisConn, key string) [][]byte {
 func GetListString(rc *RedisConn, key string) []string {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.GetListString", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -503,6 +575,8 @@ func GetListString(rc *RedisConn, key string) []string {
 func AddList(rc *RedisConn, key string, v string, pos int) error {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.AddList", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -573,6 +647,8 @@ func RemListValue(rc *RedisConn, key string, v string) error {
 	// fmt.Println("nnn:", key, []byte(v), v, n)
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.RemListValue", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -582,6 +658,8 @@ func RemListValue(rc *RedisConn, key string, v string) error {
 
 //FindInList 获得在列表中位置
 func FindInList(rc *RedisConn, key, v string) int {
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.FindInList", tm)
 	list := GetListString(rc, key)
 	for i, v0 := range list {
 		if v0 == v {
@@ -595,6 +673,8 @@ func FindInList(rc *RedisConn, key, v string) int {
 func AddScore(rc *RedisConn, key string, score float64, v []byte) error {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.AddScore", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -615,6 +695,8 @@ func AddScore(rc *RedisConn, key string, score float64, v []byte) error {
 func RemScore(rc *RedisConn, key string, v []byte) error {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.RemScore", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -635,6 +717,8 @@ func RemScore(rc *RedisConn, key string, v []byte) error {
 func GetRangeByRank(rc *RedisConn, key string, from, to int64, bAsc bool) ([][]byte, error) {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.GetRangeByRank", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -666,6 +750,8 @@ func GetRangeByRank(rc *RedisConn, key string, from, to int64, bAsc bool) ([][]b
 func GetRangeByScore(rc *RedisConn, key string, from, to float64) ([][]byte, error) {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.GetRangeByScore", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -687,6 +773,8 @@ func GetRangeByScore(rc *RedisConn, key string, from, to float64) ([][]byte, err
 func GetRangeByScoreN(rc *RedisConn, key string, from, to float64, asc bool) ([][]byte, error) {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.GetRangeByScreN", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -700,6 +788,8 @@ func GetRangeByScoreN(rc *RedisConn, key string, from, to float64, asc bool) ([]
 func GetScore(rc *RedisConn, key string, v []byte) (float64, error) {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.GetScore", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
@@ -720,6 +810,8 @@ func GetScore(rc *RedisConn, key string, v []byte) (float64, error) {
 func GetRank(rc *RedisConn, key string, v []byte, bAsc bool) (int64, error) {
 	// rc := RedisClient.Get()
 	// defer rc.Close()
+	tm := time.Now()
+	defer funcAnysis.Instance().Once("gredis.GetRank", tm)
 	if rc == nil {
 		rc = new(RedisConn)
 	}
