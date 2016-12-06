@@ -166,6 +166,41 @@ func Test_Rank(t *testing.T) {
 	}
 }
 
+func Test_Hash(t *testing.T) {
+	rc := new(RedisConn)
+	FlushDB(rc)
+	e := rc.HMSet("TestHash", "testField1", "1", "testField2", "2")
+	if e != nil {
+		t.Error("Error HMSet:", e.Error())
+		e = nil
+	}
+	if rc.HGet("TestHash", "testField1") != "1" || rc.HGet("TestHash", "testField2") != "2" {
+		t.Error("Error HGet:", rc.HGet("TestHash", "testField1"), rc.HGet("TestHash", "testField2") != "2")
+	}
+	e = rc.HSet("TestHash", "testField2", "-2")
+	if e != nil {
+		t.Error("Error HSet:", e.Error())
+		e = nil
+	}
+	if rc.HGet("TestHash", "testField2") != "-2" {
+		t.Error("Error HGet", rc.HGet("TestHash", "testField2"))
+	}
+	rc.HSet("TestHash", "testField3", "-3")
+	if rc.HGet("TestHash", "testField3") != "-3" {
+		t.Error("Error HSet2", rc.HGet("TestHash", "testField3"))
+	}
+	rc.HMSet("TestHash", "testField1", "-1", "testField2", "2", "testField3", "3")
+	if rc.HGet("TestHash", "testField1") != "-1" {
+		t.Error("Error HMSet1", rc.HGet("TestHash", "testField1"))
+	}
+	if rc.HGet("TestHash", "testField2") != "2" {
+		t.Error("Error HMSet2", rc.HGet("TestHash", "testField2"))
+	}
+	if rc.HGet("TestHash", "testField3") != "3" {
+		t.Error("Error HMSet2", rc.HGet("TestHash", "testField3"))
+	}
+}
+
 // func Test_List(t *testing.T) {
 // 	Instance(1)
 // 	FlushDB()
