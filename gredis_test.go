@@ -201,6 +201,26 @@ func Test_Hash(t *testing.T) {
 	}
 }
 
+func Test_Incr(t *testing.T) {
+	fmt.Println("testincr")
+	rc := new(RedisConn)
+	FlushDB(rc)
+	e := Incr(rc, "testIncr", 1)
+	if e != nil {
+		t.Error("Error Incr", e)
+	}
+	if GetValueInt(rc, "testIncr") != 1 {
+		t.Error("Error Incr2", GetValueInt(rc, "testIncr"))
+	}
+	e2 := Incr(rc, "testIncr", -10)
+	if e2 != nil {
+		t.Error("Error Incr3", e2)
+	}
+	if GetValueInt(rc, "testIncr") != -9 {
+		t.Error("Error Incr4", GetValueInt(rc, "testIncr"))
+	}
+}
+
 // func Test_List(t *testing.T) {
 // 	Instance(1)
 // 	FlushDB()

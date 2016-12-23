@@ -390,3 +390,19 @@ func GetRank(rc *RedisConn, key string, v []byte, bAsc bool) (int64, error) {
 	}
 	return redis.Int64(rc.Get().Do("ZREVRANK", key, v))
 }
+
+// Incr ..
+func Incr(rc *RedisConn, key string, add int32) error {
+	if add == 1 {
+		_, e := rc.Get().Do("INCR", key)
+		return e
+	}
+	_, e := rc.Get().Do("INCRBY", key, add)
+	return e
+}
+
+// GetValueInt ..
+func GetValueInt(rc *RedisConn, key string) int {
+	result, _ := redis.Int(rc.Get().Do("GET", key))
+	return result
+}
